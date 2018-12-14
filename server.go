@@ -126,13 +126,11 @@ func LikeInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 func getRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/sites", SiteListHandler).Methods("GET")
-	r.HandleFunc("/sites/{site:[a-zA-Z\\.]+}", SiteAddHandler).Methods("PUT")
-
-	r.HandleFunc("/posts/{site:[a-zA-Z\\.]+}", PostListHandler).Methods("GET")
-	r.HandleFunc("/posts/{site:[a-zA-Z\\.]+}/{post:[0-9]+}", PostAddHandler).Methods("PUT")
-
-	r.HandleFunc("/likes/{site:[a-zA-Z\\.]+}/{post:[0-9]+}", LikeInfoHandler).Methods("GET")
+	r.HandleFunc("/", SiteListHandler).Methods("GET")
+	r.HandleFunc("/{site:[a-zA-Z0-9\\-\\.]+}", SiteAddHandler).Methods("PUT")
+	r.HandleFunc("/{site:[a-zA-Z0-9\\-\\.]+}", PostListHandler).Methods("GET")
+	r.HandleFunc("/{site:[a-zA-Z0-9\\-\\.]+}/{post:[0-9]+}", PostAddHandler).Methods("PUT")
+	r.HandleFunc("/{site:[a-zA-Z0-9\\-\\.]+}/{post:[0-9]+}", LikeInfoHandler).Methods("GET")
 	return r
 }
 
