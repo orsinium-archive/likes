@@ -14,7 +14,7 @@ import (
 	"github.com/recoilme/slowpoke"
 )
 
-const storageFile = ".storage/sites.slowpoke"
+const storageDir = ".storage/"
 const tokenSize = 40
 
 type likeInfo struct {
@@ -62,7 +62,7 @@ func split(buf []byte) [][]byte {
 
 // SiteListHandler returns list of available sites
 func SiteListHandler(w http.ResponseWriter, r *http.Request) {
-	keys, _ := slowpoke.Keys(storageFile, nil, 0, 0, true)
+	keys, _ := slowpoke.Keys(storageDir+"sites", nil, 0, 0, true)
 	sep := []byte("\n")
 	w.Write(bytes.Join(keys, sep))
 }
@@ -70,8 +70,23 @@ func SiteListHandler(w http.ResponseWriter, r *http.Request) {
 // SiteAddHandler adds new site
 func SiteAddHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	slowpoke.Set(storageFile, []byte(vars["site"]), []byte(""))
-	w.Write([]byte("OK!"))
+	slowpoke.Set(storageDir+"sites", []byte(vars["site"]), []byte(""))
+	w.Write([]byte("OK"))
+}
+
+// PostAddHandler adds new post for site
+func PostAddHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	slowpoke.Set(storageDir+"likes:"+vars["site"], []byte(vars["post"]), []byte(""))
+	w.Write([]byte("OK"))
+}
+
+// PostListHandler shows posts for site
+func PostListHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	keys, _ := slowpoke.Keys(storageDir+"likes:"+vars["site"], nil, 0, 0, true)
+	sep := []byte("\n")
+	w.Write(bytes.Join(keys, sep))
 }
 
 // LikeInfoHandler returns info about likes for given site and post
@@ -91,7 +106,7 @@ func LikeInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	values, _ := slowpoke.Get(storageFile, []byte(vars["site"]))
+	values, _ := slowpoke.Get(storageDir+"likes:"+vars["site"], []byte(vars["post"]))
 	tokens := split(values)
 
 	// set cookie
@@ -112,7 +127,11 @@ func LikeInfoHandler(w http.ResponseWriter, r *http.Request) {
 func getRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/sites", SiteListHandler).Methods("GET")
-	r.HandleFunc("/sites/{site:[a-zA-Z\\.]+}", SiteAddHandler).Methods("POST")
+	r.HandleFunc("/sites/{site:[a-zA-Z\\.]+}", SiteAddHandler).Methods("PUT")
+
+	r.HandleFunc("/posts/{site:[a-zA-Z\\.]+}", PostListHandler).Methods("GET")
+	r.HandleFunc("/posts/{site:[a-zA-Z\\.]+}/{post:[0-9]+}", PostAddHandler).Methods("PUT")
+
 	r.HandleFunc("/likes/{site:[a-zA-Z\\.]+}/{post:[0-9]+}", LikeInfoHandler).Methods("GET")
 	return r
 }
